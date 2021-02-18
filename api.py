@@ -1,18 +1,20 @@
 from flask import Flask
 from flask_restful import Resource, Api, abort
-from db import find_code, generate_code
+from service import ServiceManager
 
 app = Flask(__name__)
 api = Api(app)
+service_manager = ServiceManager()
+
 
 
 class GetLink(Resource):
 
     def get(self, code):
 
-        found, url = find_code(code)
+        success, url = service_manager.decode(code)
 
-        if found:
+        if success:
             return url
         else:
             return abort(404, message=f"The code {code} is not valid ")
@@ -22,7 +24,7 @@ class GetCode(Resource):
 
     def get(self, url):
 
-        code = generate_code(url)
+        code = service_manager.encode(url)
 
         return code
 

@@ -2,7 +2,7 @@ from configparser import ConfigParser
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Integer
 
 Base = declarative_base()
 
@@ -11,57 +11,57 @@ class Url(Base):
 
     __tablename__ = 'urls'
 
-    code = Column(String, primary_key=True)
+    code = Column(Integer, primary_key=True)
 
     url = Column(String)
 
-        def __init__(self, code, url):
+    def __init__(self, code, url):
         self.code = code
         self.url = url
 
 
-def generate_code(url):
-    config_object = ConfigParser()
-    config_object.read("config.ini")
+class DatabaseManager:
 
-    siteInfo = config_object["SITEINFO"]
-    dbConfig = config_object['DATABASECONFIG']
-    lastcode = siteInfo['lastcode']
+    def __init__(self):
 
+        config_object = ConfigParser()
+        config_object.read("config.ini")
 
-    code = int(lastcode) + 1
-    siteInfo['lastcode'] = str(code)
-    config_object["SITEINFO"] = siteInfo
+        dbConfig = config_object['DATABASECONFIG']
+        login_string = f"postgresql://{dbConfig['user']}:{dbConfig['password']}@{dbConfig['host']}/{dbConfig['dbname']}"
 
-    with open('config.ini', 'w') as conf:
-        config_object.write(conf)
+        engine = create_engine(login_string)
+        self.session = sessionmaker(bind=engine)()
 
-    login_string = f"postgresql://{dbConfig['user']}:{dbConfig['password']}@{dbConfig['host']}/{dbConfig['dbname']}"
+    def save_code(self, url: str, code:int ):
 
-    engine = create_engine(login_string)
-    session = sessionmaker(bind=engine)()
+        record = Url(code, url)
+        self.session.add(record)
+        self.session.commit()
+        return code
 
-    record = Url(code, url)
-    session.add(record)
-    session.commit()
-    return code
+    def find_url(self, url: str) -> int:
 
+        search = self.session.query(Url).filter_by(url=url).all()
 
-def find_code(code):
-    config_object = ConfigParser()
-    config_object.read("config.ini")
+        if len(search):
+            result = search[0].code
+            return True, result
+        else:
+            return False, None
 
-    dbConfig = config_object['DATABASECONFIG']
-    login_string = f"postgresql://{dbConfig['user']}:{dbConfig['password']}@{dbConfig['host']}/{dbConfig['dbname']}"
+    def find_code(self, code: int) -> (bool, int):
 
-    engine = create_engine(login_string)
-    session = sessionmaker(bind=engine)()
+        search = self.session.query(Url).filter_by(code=code).all()
 
-    search = session.query(Url).filter_by(code=code).all()
+        if len(search):
+            result = search[0].url
+            return True, result
+        else:
+            return False, None
 
-    if len(search):
-        result = search[0].url
-        return True, result
-    else:
-        return False, None
+    def get_last_code(self):
+
+        search = self.session.query(Url).all()
+        return len(search)
 
