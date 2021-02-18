@@ -1,7 +1,5 @@
 from configparser import ConfigParser
-import psycopg2
 from sqlalchemy import create_engine
-import urllib.parse
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String
@@ -17,10 +15,9 @@ class Url(Base):
 
     url = Column(String)
 
-    def __init__(self, code, url):
+        def __init__(self, code, url):
         self.code = code
         self.url = url
-
 
 
 def generate_code(url):
