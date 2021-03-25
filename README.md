@@ -7,7 +7,7 @@
 
 
 ## About
-This is the backend of a Ticketing System App. 
+This is the backend of a URL shortenning app. 
 
 It uses SQLAlchemy to communicate with the database locally and a REST API to communicate with the frontend service. 
 The service also caches some data temporarily in local memory# TicketingFrontend
